@@ -1,0 +1,126 @@
+﻿========================================================================================
+GRIDGUARD: AUTONOMOUS IoT DEMAND-RESPONSE & SMART ENERGY HUB
+GENESIZ '26 HACKATHON — MASTER PROJECT HANDOVER & SPECIFICATION ARCHIVE
+========================================================================================
+Archived On: September 12, 2026
+Authors / Engineering Team:
+  - Kavish Shanilka (GitHub: @kavishshanilka)
+  - Lahiru Sampath (GitHub: @lahirusampath2003)
+
+========================================================================================
+1. PUBLIC REPOSITORIES & LIVE WEB ACCESS
+========================================================================================
+- Personal Fork & Profile: https://github.com/kavishshanilka/gridguard
+- Main Team Repository:    https://github.com/lahirusampath2003/gridguard
+- Live Interactive Sim:    https://kavishshanilka.github.io/gridguard/
+- Alternate Live Sim:      https://lahirusampath2003.github.io/gridguard/
+
+========================================================================================
+2. LOCAL DIRECTORY ON THIS PC
+========================================================================================
+Local Path: D:\University\extra\genesiz 26\gridguard\
+
+Key Files & Folders:
+  - README.md                   : Full project documentation, architecture & badges
+  - SYSTEM_SPECIFICATION.md     : Complete hardware pinouts, MQTT contracts, math derivations
+  - index.html                  : Standalone interactive simulator (runs in any browser offline)
+  - demo_simulator.html         : Offline copy of the interactive simulator
+  - simulator/                  : Simulator sources & dedicated documentation
+  - esp32/                      : ESP32 Arduino/C++ firmware codes
+      ├── esp32_smart_switch/   : 25W Lamp / Switch Node firmware (GPIO 4 relay, GPIO 18 button)
+      ├── esp32_smart_plug/     : 1500W Kettle / Plug Node firmware with anti-bounce
+      ├── esp32_main_meter/     : PZEM-004T AC Main Meter node firmware
+      ├── pzem_node/            : Modular PZEM AC driver
+      └── switch_node/          : Generic switch node with network watchdog
+  - pi/                         : Raspberry Pi 5 Central Hub backend & frontend
+      ├── gridguard_brain.py    : Core autonomous demand-response daemon & Delta-P engine
+      ├── app.py                : Flask REST API and WebSocket server
+      ├── pzem_reader.py        : Direct Modbus RTU serial reader for PZEM-004T
+      └── templates/index.html  : Glassmorphism / Neumorphic web dashboard
+  - scripts/                    : Automation, network sweep, SSH, deployment & diagnostics tools
+  - docs/                       : Proposal documents & presentations (GENESIZ26_GridGuard_Proposal_Updated.docx)
+
+========================================================================================
+3. HARDWARE PINOUTS & SPECIFICATIONS
+========================================================================================
+A. Smart Switch Node (ESP32 - Living Room Lamp / 25W Load)
+   - Relay Output:            GPIO 4 (Active-HIGH)
+   - Push Button / Switch:    GPIO 18 (Active-LOW, INPUT_PULLUP)
+   - Green LED (WiFi/MQTT):   GPIO 26 (Solid = Connected, Blinking = Searching)
+   - Red LED (Load/Status):   GPIO 27 (Solid = ON, Fast Blink = Peak Delay Intercept)
+
+B. Smart Plug Node (ESP32 - Electric Kettle / 1500W Deferrable Load)
+   - Relay Output:            GPIO 4 (Active-HIGH)
+   - Push Button / Override:  GPIO 18 (Active-LOW, INPUT_PULLUP)
+   - Green LED (WiFi/MQTT):   GPIO 26 (Solid = Connected, Blinking = Searching)
+   - Red LED (Load/Status):   GPIO 27 (Solid = ON, Fast Blink = Peak Delay Intercept)
+
+C. AC Main Meter Node (ESP32 + PZEM-004T v3.0 AC Sensor)
+   - PZEM TX -> ESP32 RX2:   GPIO 26
+   - PZEM RX -> ESP32 TX2:   GPIO 27
+   - Built-in LED:           GPIO 2 (Solid Blue = Connected to Pi)
+   - AC Voltage Input:       230V AC Mains (Screw terminals L & N)
+   - Current Transformer:    100A Split-Core CT clamped on Main AC Live wire
+
+D. Central Hub (Raspberry Pi 5)
+   - Operating System:       Raspberry Pi OS (64-bit Debian Bookworm)
+   - Services:               Mosquitto MQTT Broker (port 1883), Python 3 daemon, Flask (port 5000)
+
+========================================================================================
+4. MQTT CONTRACT & MESSAGING ARCHITECTURE
+========================================================================================
+Broker: Mosquitto on Raspberry Pi 5 (Port 1883)
+Default Peak Hours: 18:30 – 22:30 (Configurable in gridguard_brain.py)
+
+Key Topics:
+  - Main Power Telemetry:
+      Topic:   gridguard/sensor/main_power
+      Payload: {"power_w": 1464.7, "voltage": 226.5, "current": 6.47}
+  - Node Status:
+      Topic:   gridguard/nodes/<node_id>/status
+      Payload: {"state": "ON"|"OFF"|"DELAY"|"OVERRIDE", "power_w": 1500}
+  - Node Control Commands:
+      Topic:   gridguard/nodes/<node_id>/command
+      Payload: "ON" | "OFF" | "DELAY" | "OVERRIDE"
+
+========================================================================================
+5. CORE ALGORITHMS IMPLEMENTED
+========================================================================================
+1. Autonomous Peak Hour Interception:
+   - High-power deferrable loads (>1000W like Kettle) turned ON between 18:30-22:30
+     are intercepted within 4-5 seconds.
+   - Central brain issues a DELAY command to protect grid stability & avoid peak tariffs.
+   - Low-power essential loads (<1000W like Lighting) remain uninterrupted.
+
+2. 5-Second Delta-P Disaggregation:
+   - When a node toggles, GridGuard samples the baseline power P_baseline.
+   - Tracks peak power P_peak over a 5-second ramp window.
+   - Disaggregated node power = P_peak - P_baseline without needing separate meters.
+
+3. Human-in-the-Loop Override:
+   - Yellow override button on Web UI or physical button on ESP32 immediately re-energizes
+     the appliance if user insists on using it during peak hours.
+
+4. TOU Tariff & Bill Projection (Sri Lanka CEB blocks):
+   - Off-peak (22:30 - 05:30): LKR 13.00 / kWh
+   - Day (05:30 - 18:30):      LKR 25.00 / kWh
+   - Peak (18:30 - 22:30):     LKR 54.00 / kWh
+
+========================================================================================
+6. HOW TO RUN THE SYSTEM
+========================================================================================
+A. Interactive Web Simulator (Zero hardware needed):
+   - Simply double click "index.html" or "demo_simulator.html" in D:\University\extra\genesiz 26\gridguard\
+   - Or open https://kavishshanilka.github.io/gridguard/ in any browser.
+
+B. Hardware Deployment:
+   - Flash ESP32 codes from esp32/ folder via Arduino IDE.
+   - On Raspberry Pi 5, run:
+       mosquitto -d
+       python3 pi/gridguard_brain.py &
+       python3 pi/app.py &
+   - Access web dashboard via http://<pi_ip>:5000/
+
+========================================================================================
+END OF HANDOVER ARCHIVE — ALL FILES ARE SAVED LOCALLY ON D: DRIVE AND SYNCED TO GITHUB
+========================================================================================
