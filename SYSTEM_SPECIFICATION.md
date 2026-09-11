@@ -1,6 +1,7 @@
 # 🗂️ GridGuard System Specification & Feature Reference
 
-> **Master Reference File**: This document records the complete hardware pinouts, LED indicators, software functions, MQTT topics, control rules, and UI structure of the **GridGuard Smart Home Energy System**. Whenever new features or hardware modifications are added, this file MUST be updated.
+> **Master Reference File**: Co-developed by Kavishka Shanilka and Lahiru Sampath.
+> This document records the complete hardware pinouts, LED indicators, software functions, MQTT topics, control rules, and UI structure of the **GridGuard Smart Home Energy System**. Whenever new features or hardware modifications are added, this file MUST be updated.
 
 ---
 
