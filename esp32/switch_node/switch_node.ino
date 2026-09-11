@@ -1,4 +1,3 @@
-// Co-Developed by Kavishka Shanilka (@kavishshanilka)
 #include <WiFi.h>
 #include <PubSubClient.h>
 
