@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>GridGuard Smart Home Hub</title>
+    <!-- Chart.js for Bill Prediction Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f5fa;
+            --card-bg: #ffffff;
+            --card-shadow: 0 10px 30px rgba(118, 128, 160, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
+            --text-main: #1e293b;
+            --text-muted: #94a3b8;
+            --purple-primary: #7c3aed;
+            --purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            --purple-light: #f3e8ff;
+            --purple-glow: rgba(124, 58, 237, 0.25);
+            --orange-accent: #ff6b00;
+            --border-color: #e2e8f0;
+            --sidebar-width: 80px;
+            --rightpanel-width: 280px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ICON ONLY LEFT SIDEBAR */
+        .icon-sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 0;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .sidebar-brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: var(--purple-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            margin-bottom: 35px;
+            box-shadow: 0 4px 15px var(--purple-glow);
+        }
+
+        .sidebar-icons-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+            width: 100%;
+            align-items: center;
+        }
+
+        .icon-item {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .icon-item:hover {
+            background: var(--purple-light);
+            color: var(--purple-primary);
+        }
+
+        .icon-item.active {
+            color: var(--purple-primary);
+            background: var(--purple-light);
+        }
+
+        .icon-item.active::before {
+            content: '';
+            position: absolute;
+            left: -18px;
+            width: 4px;
+            height: 24px;
+            background: var(--purple-primary);
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            margin-right: var(--rightpanel-width);
+            flex: 1;
+            padding: 30px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header-top h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .header-top p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* CENTER HERO DASHBOARD CONTAINER */
+        .hero-dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 25px;
+        }
+
+        .neu-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* RADIAL THERMOSTAT / POWER DIAL */
+        .dial-container {
+            text-align: center;
+            position: relative;
+            padding: 10px;
+        }
+
+        .time-pill-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 22px;
+        }
+
+        .time-pill {
+            background: #ffffff;
+            color: var(--text-main);
+            padding: 8px 18px;
+            border-radius: 30px;
+            border: 1.5px solid #c4b5fd;
+            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .time-pill-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #6d28d9;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .time-pill-input {
+            border: 1.5px solid #ddd6fe;
+            background: #f5f3ff;
+            color: #1e1b4b;
+            font-weight: 800;
+            font-size: 15px;
+            padding: 5px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .time-pill-input:focus, .time-pill-input:hover {
+            border-color: var(--purple-primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        }
+
+        .time-pill-to {
+            font-size: 12px;
+            font-weight: 800;
+            color: #7c3aed;
+            padding: 0 2px;
+        }
+
+        .radial-dial-svg {
+            width: 220px;
+            height: 220px;
+            margin: 0 auto;
+            transform: rotate(-90deg);
+        }
+
+        .dial-reading-center {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .dial-reading-center .val {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .dial-reading-center .lbl {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        /* ANALYTICS BARS CARD */
+        .analytics-card h4 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* TREND CHART WITH Y-AXIS */
+        .trend-chart-wrapper {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+            height: 160px;
+            padding-top: 10px;
+            position: relative;
+        }
+
+        .trend-y-axis {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+            min-width: 52px;
+            padding-bottom: 24px;
+            padding-top: 4px;
+            user-select: none;
+        }
+
+        .trend-y-axis .y-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .trend-y-axis .y-unit {
+            font-size: 9px;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .trend-bars-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .trend-bars-area .grid-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            border-top: 1px dashed #e2e8f0;
+            pointer-events: none;
+        }
+
+        .trend-bars-area .grid-line.top { top: 8px; }
+        .trend-bars-area .grid-line.mid { top: calc(50% - 6px); }
+        .trend-bars-area .grid-line.base { bottom: 24px; border-top: 1px solid #cbd5e1; }
+
+        .bars-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .bar-pill {
+            width: 12px;
+            border-radius: 10px;
+            background: #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .bar-pill.active-purple {
+            background: var(--purple-gradient);
+            box-shadow: 0 4px 12px var(--purple-glow);
+        }
+
+        .bar-pill.active-orange {
+            background: linear-gradient(135deg, #ff8800 0%, #ff5500 100%);
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+        }
+
+        .bar-lbl {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* SMART NODES GRID */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-main);
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .device-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 22px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .device-card.on {
+            background: #1e1b4b;
+            color: white;
+        }
+
+        .device-card.on .device-subtext {
+            color: #a5b4fc;
+        }
+
+        .device-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .device-icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(124, 58, 237, 0.1);
+            color: var(--purple-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .device-card.on .device-icon-circle {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        /* PROMINENT HIGH-VISIBILITY POWER BUTTON */
+        .btn-power-prominent {
+            width: 100%;
+            padding: 14px;
+            font-size: 13px;
+            font-weight: 800;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-power-prominent.off {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-power-prominent.off:hover {
+            background: var(--purple-light);
+            color: var(--purple-primary);
+        }
+
+        .btn-power-prominent.on {
+            background: var(--purple-gradient);
+            color: white;
+            box-shadow: 0 6px 20px var(--purple-glow);
+        }
+
+        .btn-power-prominent.override {
+            background: linear-gradient(135deg, #ff8800 0%, #ff5500 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
+        }
+
+        .device-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .device-subtext {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .device-tools {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-device-tool {
+            flex: 1;
+            padding: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: #f8fafc;
+            color: var(--text-main);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .device-card.on .btn-device-tool {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-device-tool.active-timer {
+            background: #fef3c7;
+            color: #b45309;
+            border-color: #f59e0b;
+            font-weight: 800;
+        }
+
+        .device-card.on .btn-device-tool.active-timer {
+            background: rgba(52, 211, 153, 0.25);
+            color: #6ee7b7;
+            border-color: #34d399;
+        }
+
+        /* LIVE TIMER COUNTDOWN BADGE */
+        .card-timer-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .device-card.on .card-timer-badge {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .timer-badge-left {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .timer-pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f59e0b;
+            display: inline-block;
+            box-shadow: 0 0 8px #f59e0b;
+            animation: timerPulse 1.5s infinite;
+        }
+
+        .device-card.on .timer-pulse-dot {
+            background: #34d399;
+            box-shadow: 0 0 8px #34d399;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+        }
+
+        .timer-cancel-x {
+            background: rgba(0, 0, 0, 0.08);
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .timer-cancel-x:hover {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.15);
+        }
+
+        /* RIGHT PANEL (Profile & Presets) */
+        .right-panel {
+            width: var(--rightpanel-width);
+            background: #ffffff;
+            border-left: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            padding: 30px 22px;
+            display: flex;
+            flex-direction: column;
+            z-index: 900;
+        }
+
+        .profile-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .profile-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--purple-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 4px 15px var(--purple-glow);
+        }
+
+        .profile-text h4 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .profile-text p {
+            margin: 2px 0 0 0;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .preset-btn {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .preset-btn.active {
+            background: var(--purple-gradient);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px var(--purple-glow);
+        }
+
+        /* Tariff & Bill View */
+        .chart-container {
+            position: relative;
+            height: 220px;
+            margin-top: 15px;
+        }
+
+        .tariff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .tariff-mini-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .tariff-mini-box .val {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--purple-primary);
+        }
+
+        .tariff-mini-box .lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .logs-console {
+            background: #0f172a;
+            border-radius: 16px;
+            padding: 16px;
+            height: 480px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            color: #a855f7;
+            border: 1px solid var(--border-color);
+        }
+
+        .log-entry { margin-bottom: 6px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 4px; }
+
+        /* Notification Drawer & Modals */
+        .notif-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            max-width: 90vw;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.15);
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notif-drawer.open { transform: translateX(0); }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 10001;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 400px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            outline: none;
+        }
+
+        /* NATIVE FLOATING BOTTOM NAVIGATION BAR (Smartphones) */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 35px;
+            z-index: 9000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 0 12px;
+        }
+
+        .mobile-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 100%;
+        }
+
+        .mobile-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            height: 100%;
+        }
+
+        .mobile-nav-btn.active {
+            color: var(--purple-primary);
+        }
+
+        /* NATIVE SWIPEABLE TOAST NOTIFICATIONS */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 90%;
+            max-width: 420px;
+            pointer-events: none;
+        }
+
+        .toast-card {
+            pointer-events: auto;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 16px 20px;
+            box-shadow: 0 15px 35px rgba(124, 58, 237, 0.18), 0 3px 10px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--purple-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            user-select: none;
+            touch-action: pan-x;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            animation: dropDown 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        @keyframes dropDown {
+            from { transform: translateY(-40px) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .toast-content h5 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-main); }
+        .toast-content p { margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted); }
+        .toast-close { cursor: pointer; color: var(--text-muted); font-size: 16px; font-weight: 700; }
+
+        /* RESPONSIVE ADAPTATION */
+        @media (max-width: 1024px) {
+            .right-panel { display: none !important; }
+            .main-wrapper { margin-right: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .icon-sidebar { display: none !important; }
+            .main-wrapper {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px 16px 95px 16px;
+            }
+            .mobile-bottom-nav { display: block; }
+            .hero-dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SWIPEABLE TOAST CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- LEFT ICON SIDEBAR -->
+    <div class="icon-sidebar">
+        <div class="sidebar-brand-icon">G</div>
+        <div class="sidebar-icons-list">
+            <div id="icon-tab-home" class="icon-item active" onclick="switchTab('home')">🏠</div>
+            <div id="icon-tab-tariff" class="icon-item" onclick="switchTab('tariff')">📊</div>
+            <div id="icon-tab-logs" class="icon-item" onclick="switchTab('logs')">📜</div>
+        </div>
+        <div class="icon-item" onclick="toggleDrawer()">🔔</div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-wrapper">
+
+        <div class="header-top">
+            <div>
+                <h2>GridGuard Engine</h2>
+                <p>Demand Response Central Hub</p>
+            </div>
+        </div>
+
+        <!-- TAB 1: HOME VIEW -->
+        <div id="tab-home" class="tab-content active" style="display:block;">
+            <div class="hero-dashboard-grid">
+                
+                <!-- RADIAL HERO DIAL -->
+                <div class="neu-card dial-container">
+                    <div class="time-pill-row">
+                        <div class="time-pill">
+                            <span class="time-pill-label">⏱️ PEAK WINDOW:</span>
+                            <input type="time" id="peak-start-input" class="time-pill-input" value="18:30" onchange="savePeakConfig()">
+                            <span class="time-pill-to">TO</span>
+                            <input type="time" id="peak-end-input" class="time-pill-input" value="22:30" onchange="savePeakConfig()">
+                        </div>
+                    </div>
+
+                    <div style="position:relative; display:inline-block;">
+                        <svg class="radial-dial-svg">
+                            <circle cx="110" cy="110" r="85" fill="none" stroke="#f1f5f9" stroke-width="14" stroke-dasharray="534" stroke-dashoffset="184" stroke-linecap="round"/>
+                            <circle id="dial-progress-circle" cx="110" cy="110" r="85" fill="none" stroke="url(#purpleGradient)" stroke-width="14" stroke-dasharray="534" stroke-dashoffset="534" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease;"/>
+                            <defs>
+                                <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#8b5cf6" />
+                                    <stop offset="100%" stop-color="#6d28d9" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+
+                        <div class="dial-reading-center">
+                            <div id="val-power" class="val">0 W</div>
+                            <div id="banner-status" class="lbl">OFF-PEAK</div>
+                            <div id="val-current" style="font-size: 11px; color: var(--text-muted); margin-top:2px;">Current: 0 A</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS DAILY BARS -->
+                <div class="neu-card analytics-card">
+                    <h4>LAST 7 DAYS CONSUMPTION TREND</h4>
+                    <div class="trend-chart-wrapper">
+                        <div class="trend-y-axis" id="trend-y-axis">
+                            <div class="y-label" id="y-lbl-max">0.5 <span class="y-unit">kWh</span></div>
+                            <div class="y-label" id="y-lbl-mid">0.2 <span class="y-unit">kWh</span></div>
+                            <div class="y-label" id="y-lbl-zero">0 <span class="y-unit">kWh</span></div>
+                        </div>
+                        <div class="trend-bars-area">
+                            <div class="grid-line top"></div>
+                            <div class="grid-line mid"></div>
+                            <div class="grid-line base"></div>
+                            <div id="daily-bars-container" class="bars-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SMART DEVICES GRID -->
+            <div class="section-title">DEVICES</div>
+            <div id="nodes-container" class="devices-grid">Loading devices...</div>
+        </div>
+
+        <!-- TAB 2: TARIFF & BILL VIEW -->
+        <div id="tab-tariff" class="tab-content" style="display:none;">
+            <div class="neu-card" style="margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight:700;">Monthly Bill Projection</div>
+                    <button onclick="resetDemoTariff()" title="Reset to realistic demo numbers" style="background: rgba(124, 58, 237, 0.08); border: 1px solid rgba(124, 58, 237, 0.25); font-size: 11px; font-weight: 700; color: var(--purple-primary); cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; transition: all 0.2s;">🔄 Calibrate Demo</button>
+                </div>
+                <div id="val-projected-cost" style="font-size:36px; font-weight:800; color:var(--purple-primary); margin:8px 0;">LKR 0.00</div>
+                <div style="font-size: 13px; color: var(--text-muted);" id="val-projected-kwh">Projected Usage: 0.00 kWh / month</div>
+
+                <div class="chart-container">
+                    <canvas id="billChart"></canvas>
+                </div>
+
+                <div class="tariff-grid">
+                    <div class="tariff-mini-box">
+                        <div id="val-today-kwh" class="val">0.00 kWh</div>
+                        <div class="lbl">Today's Usage</div>
+                    </div>
+                    <div class="tariff-mini-box">
+                        <div id="val-today-cost" class="val">LKR 0.00</div>
+                        <div class="lbl">Today's Cost</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="neu-card">
+                <div class="section-title">⚙️ Tariff Settings</div>
+                <div class="form-group">
+                    <label>Start Day of Month:</label>
+                    <input type="number" id="tariff-start-day" value="1" min="1" max="28">
+                </div>
+                <div class="form-group">
+                    <label>Off-Peak Rate (LKR / kWh):</label>
+                    <input type="number" id="tariff-offpeak-rate" value="25.0" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label>Peak Rate (LKR / kWh):</label>
+                    <input type="number" id="tariff-peak-rate" value="54.0" step="0.5">
+                </div>
+                <button class="preset-btn active" style="width:100%; border:none;" onclick="saveTariffConfig()">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- TAB 3: LOGS VIEW -->
+        <div id="tab-logs" class="tab-content" style="display:none;">
+            <div class="neu-card">
+                <div class="section-title">📜 Central System Event Log Terminal</div>
+                <div id="logs-console" class="logs-console"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RIGHT PANEL (Profile & Quick Presets) -->
+    <div class="right-panel">
+        <div class="profile-box">
+            <div class="profile-avatar">G</div>
+            <div class="profile-text">
+                <h4>GridGuard Hub</h4>
+                <p>Peak DR Engine</p>
+            </div>
+        </div>
+
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px;">PRESETS</div>
+        <div class="preset-grid">
+            <div id="btn-auto" class="preset-btn active" onclick="setPeakMode('AUTO')">
+                <span style="font-size: 18px;">⚡</span>
+                <span>Auto Mode</span>
+            </div>
+            <div id="btn-force-off" class="preset-btn" onclick="setPeakMode('FORCE_OFFPEAK')">
+                <span style="font-size: 18px;">🌱</span>
+                <span>Off-Peak</span>
+            </div>
+            <div id="btn-force-peak" class="preset-btn" onclick="setPeakMode('FORCE_PEAK')">
+                <span style="font-size: 18px;">🔥</span>
+                <span>Force Peak</span>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">SAVINGS COUNTER</div>
+            <button onclick="resetSavingsCounter()" title="Reset to 0 LKR" style="background: none; border: none; font-size: 11px; font-weight: 700; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.color='var(--purple-primary)'" onmouseout="this.style.color='var(--text-muted)'">🔄 Reset</button>
+        </div>
+        <div class="neu-card" style="padding:16px; margin-bottom:20px; text-align:center;">
+            <div id="val-saved-money" style="font-size: 20px; font-weight: 800; color: var(--purple-primary);">LKR 0.00 Saved</div>
+            <div id="val-saved-kwh" style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Shifted Energy: 0.00 kWh</div>
+        </div>
+    </div>
+
+    <!-- MOBILE NATIVE FLOATING BOTTOM NAVIGATION BAR -->
+    <div class="mobile-bottom-nav">
+        <div class="mobile-nav-items">
+            <div id="mobile-tab-btn-home" class="mobile-nav-btn active" onclick="switchTab('home')">
+                <span style="font-size:18px;">🏠</span>
+                <span>Home</span>
+            </div>
+            <div id="mobile-tab-btn-tariff" class="mobile-nav-btn" onclick="switchTab('tariff')">
+                <span style="font-size:18px;">📊</span>
+                <span>Tariff</span>
+            </div>
+            <div id="mobile-tab-btn-logs" class="mobile-nav-btn" onclick="switchTab('logs')">
+                <span style="font-size:18px;">📜</span>
+                <span>Logs</span>
+            </div>
+            <div class="mobile-nav-btn" onclick="toggleDrawer()">
+                <span style="font-size:18px;">🔔</span>
+                <span>Alerts</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide-Out Notification Drawer -->
+    <div id="notif-drawer" class="notif-drawer">
+        <div style="padding:20px; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0;">Notifications 🔔</h3>
+            <span style="cursor:pointer; color:var(--text-muted);" onclick="toggleDrawer()">✕</span>
+        </div>
+        <div id="drawer-body" style="padding:20px; flex:1; overflow-y:auto;">
+            <p style="color: var(--text-muted); text-align: center; font-size: 13px;">No notifications</p>
+        </div>
+        <div style="padding:20px; border-top:1px solid var(--border-color);">
+            <button class="preset-btn active" style="width:100%; border:none;" onclick="clearNotifications()">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Timer Modal -->
+    <div id="timer-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 id="timer-modal-title">⏱️ Set Countdown Timer</h3>
+            <p style="font-size: 12px; color: var(--text-muted);" id="timer-modal-desc"></p>
+            <div class="form-group">
+                <label>Preset Duration:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-device-tool" onclick="selectPresetTimer(15)">15 Mins</button>
+                    <button class="btn-device-tool" onclick="selectPresetTimer(30)">30 Mins</button>
+                    <button class="btn-device-tool" onclick="selectPresetTimer(60)">1 Hour</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Or Custom Duration (Minutes):</label>
+                <input type="number" id="timer-custom-min" placeholder="e.g. 45" min="1" max="1440">
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                <button class="btn-device-tool" onclick="cancelTimerModal()">Cancel</button>
+                <button class="preset-btn active" style="padding:8px 16px;" onclick="saveTimerModal()">Start</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div id="schedule-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 id="schedule-modal-title">📅 Node Daily Schedule</h3>
+            <div class="form-group">
+                <label>Daily Auto ON Time (24h):</label>
+                <input type="time" id="sched-on-time">
+            </div>
+            <div class="form-group">
+                <label>Daily Auto OFF Time (24h):</label>
+                <input type="time" id="sched-off-time">
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                <button class="btn-device-tool" onclick="closeScheduleModal()">Close</button>
+                <button class="preset-btn active" style="padding:8px 16px;" onclick="saveScheduleModal()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentNodes = {};
+        let activeModalNodeId = null;
+        let billChart = null;
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.icon-item').forEach(t => t.classList.remove('active'));
+            const iconTab = document.getElementById(`icon-tab-${tabName}`);
+            if (iconTab) iconTab.classList.add('active');
+
+            document.querySelectorAll('.mobile-nav-btn').forEach(t => t.classList.remove('active'));
+            const mobBtn = document.getElementById(`mobile-tab-btn-${tabName}`);
+            if (mobBtn) mobBtn.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+            if (tabName === 'tariff' && billChart) {
+                billChart.update();
+            }
+        }
+
+        function initBillChart() {
+            const ctx = document.getElementById('billChart').getContext('2d');
+            billChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4 (Proj)'],
+                    datasets: [
+                        {
+                            label: 'Standard Unoptimized Cost (LKR)',
+                            data: [450, 920, 1480, 2100],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        },
+                        {
+                            label: 'GridGuard Optimized Cost (LKR)',
+                            data: [320, 680, 1050, 1420],
+                            borderColor: '#7c3aed',
+                            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#f1f5f9' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#f1f5f9' } }
+                    }
+                }
+            });
+        }
+
+        function fetchStatus() {
+            fetch('/api/status')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('val-power').innerText = data.total_power_w + ' W';
+                    document.getElementById('val-current').innerText = 'Current: ' + data.total_current_a + ' A';
+
+                    // Update Dynamic Radial Power Gauge Arc (0W = 534 empty, 3000W = 184 full)
+                    const maxScale = 3000.0;
+                    const powerVal = Math.max(0.0, parseFloat(data.total_power_w) || 0.0);
+                    const pRatio = Math.min(1.0, powerVal / maxScale);
+                    const newOffset = 534.0 - (pRatio * 350.0);
+                    const circle = document.getElementById('dial-progress-circle');
+                    if (circle) {
+                        circle.style.strokeDashoffset = newOffset.toFixed(1);
+                        circle.setAttribute('stroke-dashoffset', newOffset.toFixed(1));
+                    }
+
+                    const statusText = document.getElementById('banner-status');
+
+                    if (data.is_peak) {
+                        statusText.innerText = 'PEAK TIME';
+                        statusText.style.color = '#ef4444';
+                    } else {
+                        statusText.innerText = 'OFF-PEAK';
+                        statusText.style.color = '#7c3aed';
+                    }
+
+                    if (document.activeElement.id !== 'peak-start-input') {
+                        document.getElementById('peak-start-input').value = data.peak_start_time || '18:30';
+                    }
+                    if (document.activeElement.id !== 'peak-end-input') {
+                        document.getElementById('peak-end-input').value = data.peak_end_time || '22:30';
+                    }
+
+                    document.getElementById('btn-auto').className = data.manual_peak_override === null ? 'preset-btn active' : 'preset-btn';
+                    document.getElementById('btn-force-off').className = data.manual_peak_override === false ? 'preset-btn active' : 'preset-btn';
+                    document.getElementById('btn-force-peak').className = data.manual_peak_override === true ? 'preset-btn active' : 'preset-btn';
+
+                    renderNodes(data.nodes);
+
+                    if (data.tariff) {
+                        document.getElementById('val-projected-cost').innerText = `LKR ${data.tariff.projected_monthly_cost.toFixed(2)}`;
+                        document.getElementById('val-projected-kwh').innerText = `Projected Usage: ${data.tariff.projected_monthly_kwh} kWh / month`;
+                        document.getElementById('val-today-kwh').innerText = `${data.tariff.current_kwh} kWh`;
+                        document.getElementById('val-today-cost').innerText = `LKR ${data.tariff.today_cost.toFixed(2)}`;
+                        document.getElementById('val-saved-money').innerText = `LKR ${data.tariff.saved_money.toFixed(2)} Saved`;
+                        document.getElementById('val-saved-kwh').innerText = `Shifted Energy: ${data.tariff.peak_prevented_kwh} kWh`;
+
+                        // Populate Tariff Settings inputs if user is not actively editing them
+                        const startDayInput = document.getElementById('tariff-start-day');
+                        const offpeakInput = document.getElementById('tariff-offpeak-rate');
+                        const peakInput = document.getElementById('tariff-peak-rate');
+
+                        if (startDayInput && document.activeElement !== startDayInput && data.tariff.billing_start_day !== undefined) {
+                            startDayInput.value = data.tariff.billing_start_day;
+                        }
+                        if (offpeakInput && document.activeElement !== offpeakInput && data.tariff.offpeak_rate !== undefined) {
+                            offpeakInput.value = data.tariff.offpeak_rate;
+                        }
+                        if (peakInput && document.activeElement !== peakInput && data.tariff.peak_rate !== undefined) {
+                            peakInput.value = data.tariff.peak_rate;
+                        }
+
+                        if (data.tariff.daily_history) {
+                            renderDailyBars(data.tariff.daily_history);
+                        }
+
+                        if (billChart) {
+                            const unopt = data.tariff.projected_monthly_cost * 1.45;
+                            billChart.data.datasets[0].data = [unopt*0.25, unopt*0.5, unopt*0.75, unopt];
+                            billChart.data.datasets[1].data = [data.tariff.projected_monthly_cost*0.25, data.tariff.projected_monthly_cost*0.5, data.tariff.projected_monthly_cost*0.75, data.tariff.projected_monthly_cost];
+                            billChart.update();
+                        }
+                    }
+
+                    renderNotifications(data.notifications);
+
+                    const logsConsole = document.getElementById('logs-console');
+                    logsConsole.innerHTML = data.logs.map(log => `<div class="log-entry">${log}</div>`).join('');
+                })
+                .catch(err => console.error("Error fetching status:", err));
+        }
+
+        function renderDailyBars(history) {
+            const container = document.getElementById('daily-bars-container');
+            if (!container || !history) return;
+            
+            let rawMax = Math.max(0.1, ...history.map(h => h.kwh));
+            let maxKwh = Math.max(0.5, Math.ceil(rawMax * 10) / 10);
+            let midKwh = (maxKwh / 2).toFixed(1);
+
+            const yMax = document.getElementById('y-lbl-max');
+            const yMid = document.getElementById('y-lbl-mid');
+            const yZero = document.getElementById('y-lbl-zero');
+
+            if (yMax) yMax.innerHTML = `${maxKwh.toFixed(1)} <span class="y-unit">kWh</span>`;
+            if (yMid) yMid.innerHTML = `${midKwh} <span class="y-unit">kWh</span>`;
+            if (yZero) yZero.innerHTML = `0 <span class="y-unit">kWh</span>`;
+
+            let html = '';
+            history.forEach(item => {
+                let heightPx = Math.max(10, Math.min(115, (item.kwh / maxKwh) * 115));
+                let barClass = item.is_today ? 'active-orange' : 'active-purple';
+                html += `
+                    <div class="bar-col" title="${item.date}: ${item.kwh} kWh">
+                        <div class="bar-pill ${barClass}" style="height: ${heightPx}px;"></div>
+                        <div class="bar-lbl">${item.label}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderNodes(nodes) {
+            currentNodes = nodes;
+            const container = document.getElementById('nodes-container');
+            let html = '';
+
+            for (const [nid, node] of Object.entries(nodes)) {
+                const st = String(node.state || '').toUpperCase().trim();
+                const isDelay = st === 'DELAY' || st.includes('DELAY');
+                const isOverride = st === 'OVERRIDE' || node.override === true;
+                const isOn = st === 'ON' || isOverride;
+                const iconSymbol = node.type === 'switch' ? '💡' : '🔌';
+
+                let actionType = isDelay ? 'OVERRIDE' : 'TOGGLE';
+
+                let btnClass = 'off';
+                let btnText = '⏻ TURN ON';
+
+                if (isOn) {
+                    btnClass = 'on';
+                    btnText = '⏻ TURN OFF';
+                    actionType = 'TOGGLE';
+                } else if (isDelay) {
+                    btnClass = 'override';
+                    btnText = '⚡ OVERRIDE';
+                    actionType = 'OVERRIDE';
+                }
+
+                const displayBadge = isOverride ? 'OVERRIDE' : (isDelay ? 'DELAY' : (isOn ? 'ON' : 'OFF'));
+
+                const hasActiveTimer = node.timer && node.timer.remaining_sec > 0;
+                const timerText = hasActiveTimer ? `⏱️ ${node.timer.remaining_str}` : '⏱️ Timer';
+                const timerBtnClass = hasActiveTimer ? 'btn-device-tool active-timer' : 'btn-device-tool';
+
+                html += `
+                    <div class="device-card ${isOn ? 'on' : ''}">
+                        <div class="device-top">
+                            <div class="device-icon-circle">${iconSymbol}</div>
+                            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase;">${displayBadge}</div>
+                        </div>
+                        <div>
+                            <div class="device-title">${node.name}</div>
+                            <div class="device-subtext">${node.power_w} W</div>
+                        </div>
+
+                        ${hasActiveTimer ? `
+                            <div class="card-timer-badge">
+                                <div class="timer-badge-left">
+                                    <span class="timer-pulse-dot"></span>
+                                    <span>⏱️ Turn ${node.timer.action} in <strong>${node.timer.remaining_str}</strong></span>
+                                </div>
+                                <button class="timer-cancel-x" onclick="cancelTimer('${nid}')" title="Cancel Countdown Timer">✕</button>
+                            </div>
+                        ` : ''}
+
+                        <button class="btn-power-prominent ${btnClass}" onclick="handleNodeClick('${nid}', '${actionType}')">
+                            ${btnText}
+                        </button>
+
+                        <div class="device-tools">
+                            <button class="${timerBtnClass}" onclick="openTimerModal('${nid}')">${timerText}</button>
+                            <button class="btn-device-tool" onclick="openScheduleModal('${nid}')">📅 Sched</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function cancelTimer(nodeId) {
+            fetch('/api/node/timer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ node_id: nodeId, action: 'OFF', minutes: 0 })
+            }).then(() => fetchStatus());
+        }
+
+        function resetSavingsCounter() {
+            if (confirm("Reset the Peak Savings Counter back to LKR 0.00?")) {
+                fetch('/api/savings/reset', { method: 'POST' })
+                    .then(() => fetchStatus());
+            }
+        }
+
+        function handleNodeClick(nodeId, action) {
+            if (action === 'OVERRIDE') {
+                if (currentNodes && currentNodes[nodeId]) {
+                    currentNodes[nodeId].override = true;
+                    currentNodes[nodeId].state = 'OVERRIDE';
+                    renderNodes(currentNodes);
+                }
+                fetch('/api/node/override', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ node_id: nodeId })
+                }).then(() => setTimeout(fetchStatus, 300));
+            } else {
+                fetch('/api/node/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ node_id: nodeId, action: 'TOGGLE' })
+                }).then(() => setTimeout(fetchStatus, 300));
+            }
+        }
+
+        let shownToastKeys = new Set();
+
+        function renderNotifications(notifs) {
+            const drawerBody = document.getElementById('drawer-body');
+            if (!notifs || notifs.length === 0) {
+                drawerBody.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 13px;">No notifications</p>';
+                return;
+            }
+
+            drawerBody.innerHTML = '';
+            notifs.forEach(n => {
+                const notifKey = n.title + '_' + n.message;
+                if (!shownToastKeys.has(notifKey)) {
+                    shownToastKeys.add(notifKey);
+                    showSwipeableToast(n.title, n.message);
+                }
+
+                const card = document.createElement('div');
+                card.style.padding = '14px';
+                card.style.borderRadius = '12px';
+                card.style.background = '#f8fafc';
+                card.style.marginBottom = '10px';
+                card.style.borderLeft = '4px solid var(--purple-primary)';
+                card.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 4px;">${n.title}</div>
+                    <div style="font-size:12px;">${n.message}</div>
+                `;
+                drawerBody.appendChild(card);
+            });
+        }
+
+        function showSwipeableToast(title, message) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast-card';
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <h5>${title}</h5>
+                    <p>${message}</p>
+                </div>
+                <span class="toast-close" onclick="dismissToast(this.parentElement)">✕</span>
+            `;
+
+            let startX = 0;
+            let currentX = 0;
+            let isDragging = false;
+
+            function onStart(e) {
+                startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                currentX = startX;
+                isDragging = true;
+                toast.style.transition = 'none';
+            }
+
+            function onMove(e) {
+                if (!isDragging) return;
+                currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                let deltaX = currentX - startX;
+                toast.style.transform = `translateX(${deltaX}px)`;
+                toast.style.opacity = `${1 - Math.abs(deltaX) / 250}`;
+            }
+
+            function onEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                let deltaX = currentX - startX;
+                if (Math.abs(deltaX) > 80) {
+                    dismissToast(toast, deltaX > 0 ? 300 : -300);
+                } else {
+                    toast.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+                    toast.style.transform = 'translateX(0)';
+                    toast.style.opacity = '1';
+                }
+            }
+
+            toast.addEventListener('touchstart', onStart, { passive: true });
+            toast.addEventListener('touchmove', onMove, { passive: true });
+            toast.addEventListener('touchend', onEnd);
+
+            toast.addEventListener('mousedown', onStart);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) dismissToast(toast);
+            }, 6000);
+        }
+
+        function dismissToast(toast, exitX = 300) {
+            toast.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+            toast.style.transform = `translateX(${exitX}px)`;
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 250);
+        }
+
+        function toggleDrawer() {
+            document.getElementById('notif-drawer').classList.toggle('open');
+        }
+
+        function clearNotifications() {
+            fetch('/api/notifications/clear', { method: 'POST' }).then(() => {
+                document.getElementById('drawer-body').innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 13px;">No notifications</p>';
+                shownToastKeys.clear();
+                fetchStatus();
+            });
+        }
+
+        function savePeakConfig() {
+            const startStr = document.getElementById('peak-start-input').value;
+            const endStr = document.getElementById('peak-end-input').value;
+
+            fetch('/api/peak_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ peak_start: startStr, peak_end: endStr })
+            }).then(() => fetchStatus());
+        }
+
+        function saveTariffConfig() {
+            const startDay = document.getElementById('tariff-start-day').value;
+            const offpeakRate = document.getElementById('tariff-offpeak-rate').value;
+            const peakRate = document.getElementById('tariff-peak-rate').value;
+
+            fetch('/api/tariff_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    billing_start_day: startDay,
+                    offpeak_rate: offpeakRate,
+                    peak_rate: peakRate
+                })
+            }).then(() => {
+                alert("Tariff Settings Saved Successfully!");
+                fetchStatus();
+            });
+        }
+
+        function resetDemoTariff() {
+            if (confirm("Calibrate energy and weekly trend to realistic household demonstration numbers?")) {
+                fetch('/api/tariff/demo_reset', { method: 'POST' })
+                    .then(() => fetchStatus());
+            }
+        }
+
+        function setPeakMode(mode) {
+            fetch('/api/peak_mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: mode })
+            }).then(() => fetchStatus());
+        }
+
+        function openTimerModal(nodeId) {
+            activeModalNodeId = nodeId;
+            const name = currentNodes[nodeId]?.name || nodeId;
+            const state = currentNodes[nodeId]?.state || 'OFF';
+            const targetAction = state === 'ON' ? 'OFF' : 'ON';
+
+            document.getElementById('timer-modal-desc').innerText = `Set countdown timer to turn ${targetAction} ${name}.`;
+            document.getElementById('timer-modal').style.display = 'flex';
+        }
+
+        function selectPresetTimer(mins) {
+            document.getElementById('timer-custom-min').value = mins;
+        }
+
+        function saveTimerModal() {
+            const mins = document.getElementById('timer-custom-min').value;
+            if (!mins || mins <= 0) return;
+            const state = currentNodes[activeModalNodeId]?.state || 'OFF';
+            const targetAction = state === 'ON' ? 'OFF' : 'ON';
+
+            fetch('/api/node/timer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ node_id: activeModalNodeId, action: targetAction, minutes: parseInt(mins) })
+            }).then(() => {
+                document.getElementById('timer-modal').style.display = 'none';
+                fetchStatus();
+            });
+        }
+
+        function cancelTimerModal() {
+            fetch('/api/node/timer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ node_id: activeModalNodeId, action: 'OFF', minutes: 0 })
+            }).then(() => {
+                document.getElementById('timer-modal').style.display = 'none';
+                fetchStatus();
+            });
+        }
+
+        function openScheduleModal(nodeId) {
+            activeModalNodeId = nodeId;
+            const name = currentNodes[nodeId]?.name || nodeId;
+            document.getElementById('schedule-modal-title').innerText = `📅 Schedule for ${name}`;
+            
+            const existing = currentNodes[nodeId]?.schedule || {};
+            document.getElementById('sched-on-time').value = existing.on_time || '';
+            document.getElementById('sched-off-time').value = existing.off_time || '';
+            document.getElementById('schedule-modal').style.display = 'flex';
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('schedule-modal').style.display = 'none';
+        }
+
+        function saveScheduleModal() {
+            const onTime = document.getElementById('sched-on-time').value;
+            const offTime = document.getElementById('sched-off-time').value;
+
+            fetch('/api/node/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ node_id: activeModalNodeId, on_time: onTime, off_time: offTime, enabled: true })
+            }).then(() => {
+                closeScheduleModal();
+                fetchStatus();
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initBillChart();
+            setInterval(fetchStatus, 2000);
+            fetchStatus();
+        });
+    </script>
+</body>
+</html>
