@@ -1,5 +1,6 @@
 # ⚡ GridGuard: Smart Demand-Response Home Energy Engine
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Try%20Interactive%20Simulator-10B981?style=for-the-badge&logo=googlechrome&logoColor=white)](https://lahirusampath2003.github.io/gridguard/)
 [![Hardware: Raspberry Pi 5](https://img.shields.io/badge/Hardware-Raspberry%20Pi%205-c51a4a?logo=raspberry-pi)](https://www.raspberrypi.com/)
 [![Microcontroller: ESP32](https://img.shields.io/badge/Node-ESP32-e7352c?logo=espressif)](https://www.espressif.com/)
 [![Protocol: MQTT](https://img.shields.io/badge/Protocol-MQTT%20Mosquitto-660066?logo=eclipsemosquitto)](https://mosquitto.org/)
@@ -7,8 +8,9 @@
 [![Framework: Flask](https://img.shields.io/badge/Backend-Python%20Flask-000000?logo=flask)](https://flask.palletsprojects.com/)
 [![UI: Neumorphic Minimalist](https://img.shields.io/badge/UI-Neumorphic%20Glass-7c3aed)](#-web-dashboard-architecture)
 
+> 🚀 **Interactive Live Simulator**: Experience GridGuard in your browser right now — zero hardware or installation required! Test peak-load autonomous interception in real-time: **[lahirusampath2003.github.io/gridguard](https://lahirusampath2003.github.io/gridguard/)**  
 > 📖 **Master Specification**: For complete pinouts, schematics, MQTT contracts, and state machines, see [`SYSTEM_SPECIFICATION.md`](SYSTEM_SPECIFICATION.md).  
-> 🎮 **Standalone Simulator**: Run the complete interactive system in your browser without hardware via [`demo_simulator.html`](demo_simulator.html).
+> 🎮 **Local Offline Copy**: [`demo_simulator.html`](demo_simulator.html) is also included for offline testing.
 
 ---
 
